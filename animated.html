@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Pro QR Generator</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(-45deg,#001f3f,#003366,#004080,#0059b3);
+    background-size:400% 400%;
+    animation: gradientBG 10s ease infinite;
+}
+
+/* Background animation */
+@keyframes gradientBG{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+/* MAIN BOX */
+.container{
+    width:380px;
+    padding:30px;
+    border-radius:20px;
+    background: rgba(0, 102, 255, 0.15);
+    backdrop-filter: blur(15px);
+    border:2px solid rgba(0,191,255,0.6);
+    box-shadow:
+        0 0 20px rgba(0,191,255,0.6),
+        0 0 40px rgba(0,191,255,0.4),
+        inset 0 0 15px rgba(0,191,255,0.3);
+    text-align:center;
+    color:white;
+    animation: floatBox 4s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes floatBox{
+    0%{transform:translateY(0px);}
+    50%{transform:translateY(-10px);}
+    100%{transform:translateY(0px);}
+}
+
+h2{
+    margin-bottom:15px;
+    letter-spacing:1px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:15px 0;
+    border:none;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.generate{
+    background:#00ccff;
+    color:black;
+}
+
+.generate:hover{
+    transform:scale(1.08);
+    box-shadow:0 0 15px #00ccff;
+}
+
+.action{
+    background:#ffffff22;
+    color:white;
+}
+
+.action:hover{
+    background:#ffffff44;
+}
+
+#qrArea{
+    margin-top:20px;
+    display:none;
+    animation: fadeIn 0.6s ease forwards;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:scale(0.8);}
+    to{opacity:1; transform:scale(1);}
+}
+
+#qrImage{
+    width:200px;
+    border-radius:12px;
+    box-shadow:0 0 20px #00ccff;
+}
+
+.history{
+    margin-top:15px;
+    max-height:80px;
+    overflow:auto;
+    font-size:12px;
+    text-align:left;
+}
+.history div{
+    margin-bottom:5px;
+    cursor:pointer;
+    opacity:0.7;
+}
+.history div:hover{opacity:1;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Blue Animated QR</h2>
+
+    <input type="text" id="qrText" placeholder="Enter text or URL">
+
+    <button class="generate" onclick="generateQR()">Generate QR</button>
+
+    <div id="qrArea">
+        <img id="qrImage" src="" alt="QR Code">
+        <div>
+            <button class="action" onclick="downloadQR()">Download</button>
+            <button class="action" onclick="deleteQR()">Delete</button>
+        </div>
+    </div>
+
+    <div class="history" id="history"></div>
+</div>
+
+<script>
+const qrText = document.getElementById("qrText");
+const qrImage = document.getElementById("qrImage");
+const qrArea = document.getElementById("qrArea");
+
+function generateQR(){
+    const text = qrText.value.trim();
+    if(!text){
+        alert("Enter text first");
+        return;
+    }
+
+    const qrURL =
+    "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="
+    + encodeURIComponent(text);
+
+    qrImage.src = qrURL;
+    qrArea.style.display = "block";
+    saveHistory(text);
+}
+
+function downloadQR(){
+    if(!qrImage.src) return;
+
+    const link = document.createElement("a");
+    link.href = qrImage.src;
+    link.download = "qr-code.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function deleteQR(){
+    qrImage.src = "";
+    qrArea.style.display = "none";
+}
+
+function saveHistory(text){
+    let history = JSON.parse(localStorage.getItem("qrHistory")) || [];
+    if(!history.includes(text)){
+        history.push(text);
+        localStorage.setItem("qrHistory", JSON.stringify(history));
+        loadHistory();
+    }
+}
+
+function loadHistory(){
+    let history = JSON.parse(localStorage.getItem("qrHistory")) || [];
+    let box = document.getElementById("history");
+    box.innerHTML = "";
+
+    history.slice().reverse().forEach(item=>{
+        let div = document.createElement("div");
+        div.textContent = item;
+        div.onclick = ()=>{
+            qrText.value = item;
+            generateQR();
+        };
+        box.appendChild(div);
+    });
+}
+loadHistory();
+
+qrText.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+        generateQR();
+    }
+});
+</script>
+
+</body>
+</html>

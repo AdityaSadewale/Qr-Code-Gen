@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rainbow Futuristic QR</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#000;
+    overflow:hidden;
+}
+#particles{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+}
+
+/* Container */
+.container{
+    position:relative;
+    z-index:1;
+    width:400px;
+    padding:30px;
+    border-radius:20px;
+    background: rgba(0,0,0,0.25);
+    box-shadow:
+        0 0 20px rgba(0,255,255,0.5),
+        0 0 40px rgba(0,255,255,0.3),
+        inset 0 0 10px rgba(0,255,255,0.2);
+    border:2px solid;
+    border-image-slice:1;
+    border-width:2px;
+    border-image-source: linear-gradient(45deg, #00f0ff, #ff00ff, #00ff00, #ff0f00);
+    animation: borderGlow 4s linear infinite, floatBox 4s ease-in-out infinite;
+    text-align:center;
+    color:white;
+    transform-style: preserve-3d;
+    transition: transform 0.2s ease;
+}
+
+/* Floating animation */
+@keyframes floatBox{
+    0%{transform:translateY(0px);}
+    50%{transform:translateY(-12px);}
+    100%{transform:translateY(0px);}
+}
+
+/* RGB animated border */
+@keyframes borderGlow{
+    0%{border-image-source: linear-gradient(45deg,#00f0ff,#ff00ff,#00ff00,#ff0f00);}
+    25%{border-image-source: linear-gradient(45deg,#ff00ff,#00ff00,#ff0f00,#00f0ff);}
+    50%{border-image-source: linear-gradient(45deg,#00ff00,#ff0f00,#00f0ff,#ff00ff);}
+    75%{border-image-source: linear-gradient(45deg,#ff0f00,#00f0ff,#ff00ff,#00ff00);}
+    100%{border-image-source: linear-gradient(45deg,#00f0ff,#ff00ff,#00ff00,#ff0f00);}
+}
+
+h2{margin-bottom:15px; letter-spacing:1px;}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:15px 0;
+    border:none;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.generate{
+    background:#00ffff;
+    color:black;
+}
+.generate:hover{
+    transform:scale(1.08);
+    box-shadow:0 0 15px #00ffff;
+}
+
+.action{
+    background:#ffffff22;
+    color:white;
+}
+.action:hover{
+    background:#ffffff44;
+}
+
+#qrArea{
+    margin-top:20px;
+    display:none;
+    animation: fadeIn 0.6s ease forwards;
+}
+@keyframes fadeIn{
+    from{opacity:0; transform:scale(0.8);}
+    to{opacity:1; transform:scale(1);}
+}
+
+/* Rainbow pulsing QR effect */
+#qrImage{
+    width:200px;
+    border-radius:12px;
+    box-shadow:0 0 25px #00ffff;
+    animation: glowPulse 2s ease-in-out infinite;
+    background: linear-gradient(90deg,#ff0000,#ff9900,#ffff00,#00ff00,#00ffff,#0000ff,#9900ff,#ff00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+@keyframes glowPulse{
+    0%,100%{filter: drop-shadow(0 0 5px #00ffff);}
+    50%{filter: drop-shadow(0 0 25px #ff00ff);}
+}
+
+.history{
+    margin-top:15px;
+    max-height:80px;
+    overflow:auto;
+    font-size:12px;
+    text-align:left;
+}
+.history div{
+    margin-bottom:5px;
+    cursor:pointer;
+    opacity:0.7;
+}
+.history div:hover{opacity:1;}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container" id="mainBox">
+    <h2>Rainbow Futuristic QR</h2>
+    <input type="text" id="qrText" placeholder="Enter text or URL">
+    <button class="generate" onclick="generateQR()">Generate QR</button>
+
+    <div id="qrArea">
+        <img id="qrImage" src="" alt="QR Code">
+        <div>
+            <button class="action" onclick="downloadQR()">Download</button>
+            <button class="action" onclick="deleteQR()">Delete</button>
+        </div>
+    </div>
+
+    <div class="history" id="history"></div>
+</div>
+
+<script>
+// QR functionality
+const qrText = document.getElementById("qrText");
+const qrImage = document.getElementById("qrImage");
+const qrArea = document.getElementById("qrArea");
+
+function generateQR(){
+    const text = qrText.value.trim();
+    if(!text){ alert("Enter text"); return; }
+    const qrURL = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(text);
+    qrImage.src = qrURL;
+    qrArea.style.display = "block";
+    saveHistory(text);
+}
+
+function downloadQR(){
+    if(!qrImage.src) return;
+    const link = document.createElement("a");
+    link.href = qrImage.src;
+    link.download = "qr-code.png";
+    link.click();
+}
+
+function deleteQR(){
+    qrImage.src = "";
+    qrArea.style.display = "none";
+}
+
+function saveHistory(text){
+    let history = JSON.parse(localStorage.getItem("qrHistory")) || [];
+    if(!history.includes(text)){
+        history.push(text);
+        localStorage.setItem("qrHistory", JSON.stringify(history));
+        loadHistory();
+    }
+}
+function loadHistory(){
+    let history = JSON.parse(localStorage.getItem("qrHistory")) || [];
+    const box = document.getElementById("history");
+    box.innerHTML = "";
+    history.slice().reverse().forEach(item=>{
+        const div = document.createElement("div");
+        div.textContent = item;
+        div.onclick = ()=>{ qrText.value=item; generateQR(); };
+        box.appendChild(div);
+    });
+}
+loadHistory();
+
+qrText.addEventListener("keydown", e=>{ if(e.key==="Enter") generateQR(); });
+
+// 3D Tilt
+const mainBox = document.getElementById("mainBox");
+mainBox.addEventListener("mousemove", e=>{
+    const rect = mainBox.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cx = rect.width/2;
+    const cy = rect.height/2;
+    const dx = (x-cx)/20;
+    const dy = (y-cy)/20;
+    mainBox.style.transform = `rotateY(${dx}deg) rotateX(${-dy}deg)`;
+});
+mainBox.addEventListener("mouseleave", ()=>{ mainBox.style.transform='rotateY(0deg) rotateX(0deg)'; });
+
+// Particles background
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let particles = [];
+for(let i=0;i<120;i++){
+    particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*2+1, dx:(Math.random()-0.5)/1.5, dy:(Math.random()-0.5)/1.5});
+}
+function animateParticles(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+        p.x+=p.dx; p.y+=p.dy;
+        if(p.x<0||p.x>canvas.width) p.dx*=-1;
+        if(p.y<0||p.y>canvas.height) p.dy*=-1;
+        ctx.fillStyle = "rgba(0,255,255,0.5)";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+    });
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
+window.addEventListener("resize", ()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+</script>
+
+</body>
+</html>
